@@ -1,0 +1,9 @@
+Bird Count Summary
+==================================================
+
+Video: /Users/eyu/Videos/duck_1.MOV
+Target birds: turkeys, ducks, chickens
+Unique birds detected: 6
+Total detections across all frames: 1194
+
+Track IDs: 1, 2, 3, 4, 10, 11

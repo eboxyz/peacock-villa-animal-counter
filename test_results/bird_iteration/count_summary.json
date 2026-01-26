@@ -1,0 +1,13 @@
+{
+  "video_source": "/Users/eyu/Videos/duck_1.MOV",
+  "unique_entities": 6,
+  "total_detections": 1194,
+  "track_ids": [
+    1,
+    2,
+    3,
+    4,
+    10,
+    11
+  ]
+}
