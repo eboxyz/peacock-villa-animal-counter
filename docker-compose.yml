@@ -68,7 +68,7 @@ services:
       - api
     networks:
       - animal_counter_network
-    # Command will be set when we create the upload service
+    command: python3 -m uvicorn animal_counter.upload_service.main:app --host 0.0.0.0 --port 8001
 
   # Nginx (reverse proxy + static file serving)
   nginx:

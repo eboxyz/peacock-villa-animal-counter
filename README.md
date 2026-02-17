@@ -7,13 +7,16 @@ Video processing API for counting animals (birds, sheep, goats) using YOLO objec
 ```
 animal_counter/
 ├── animal_counter/          # Main package
-│   ├── api/                 # FastAPI application
+│   ├── api/                 # API service (processing)
 │   │   └── main.py         # API endpoints
+│   ├── upload_service/     # Upload service (file handling)
+│   │   └── main.py         # Upload endpoints
 │   └── processors/         # Video processing scripts
 │       ├── bird_counter.py
 │       └── sheep_counter.py
 ├── tests/                   # Test suite
-│   └── test_api.py
+│   ├── test_api.py
+│   └── test_upload_service.py
 ├── Dockerfile               # Docker image definition
 ├── docker-compose.yml       # Multi-service orchestration
 ├── requirements.txt         # Python dependencies
@@ -56,11 +59,18 @@ Or manually:
 python3 -m pytest tests/ -v
 ```
 
-## API Endpoints
+## Services
 
-- `POST /process` - Upload and process a video
+### API Service (Port 8000)
+- `POST /process` - Process a video (internal)
 - `GET /all` - Get all processing results
 - `GET /results/{result_id}` - Get specific result
 - `GET /health` - Health check
+
+### Upload Service (Port 8001)
+- `POST /upload` - Upload a video file (public-facing)
+- `GET /health` - Health check
+
+The upload service handles file uploads and forwards processing requests to the API service.
 
 See [MANUAL_TESTING.md](MANUAL_TESTING.md) for detailed usage examples.

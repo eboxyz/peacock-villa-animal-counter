@@ -6,4 +6,4 @@ pip3 install pytest pytest-asyncio httpx fastapi uvicorn motor pymongo python-mu
 
 echo ""
 echo "Running tests..."
-python3 -m pytest tests/ -v --tb=short
+python3 -m pytest tests/ -v --tb=short -k "test_api or test_upload"
