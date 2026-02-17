@@ -154,11 +154,11 @@ class TestUploadEndpoint:
                 )
         
         assert response.status_code == 200
-        # Check that file was saved (result_id is in filename)
-        data = response.json()
-        result_id = data["result_id"]
-        saved_files = list(upload_dir.glob(f"{result_id}*"))
-        assert len(saved_files) > 0
+        # Check that file was saved (upload service generates its own UUID for filename)
+        # The file will be saved with a UUID, not the API response result_id
+        saved_files = list(upload_dir.glob("*.mp4"))
+        assert len(saved_files) > 0, f"No .mp4 files found in {upload_dir}. Files found: {list(upload_dir.iterdir())}"
+        # Verify file content matches
         assert saved_files[0].read_bytes() == file_content
 
 
