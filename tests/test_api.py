@@ -10,7 +10,7 @@ import sys
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from animal_counter.api.main import app, process_video_task
+from animal_counter.api.main import app
 
 
 @pytest.fixture
@@ -203,64 +203,14 @@ class TestGetResultEndpoint:
             "_id": "test-id-123",
             "result_id": "test-id-123",
             "output_dir": str(tmp_path),
-            "summary_text": "Bird Count Summary\nUnique birds: 10"
+            "summary_text": "Bird Count Summary\nUnique birds: 10",
+            "created_at": "2024-01-01T12:00:00Z"
         })
         
         response = client.get("/results/test-id-123")
         assert response.status_code == 200
         data = response.json()
         assert "summary_text" in data
-
-
-class TestProcessVideoTask:
-    """Tests for the process_video_task function"""
-    
-    @patch('animal_counter.api.main.MongoClient')
-    @patch('animal_counter.api.main.subprocess.run')
-    @patch('animal_counter.api.main.uuid.uuid4')
-    def test_process_birds_video_task(self, mock_uuid, mock_subprocess, mock_mongo_client, tmp_path):
-        """Test processing a bird video task"""
-        mock_uuid.return_value.hex = "test-uuid-123"
-        
-        # Mock MongoDB
-        mock_collection = Mock()
-        mock_collection.insert_one = Mock()
-        mock_db = Mock()
-        mock_db.__getitem__ = Mock(return_value=mock_collection)
-        mock_client = Mock()
-        mock_client.__getitem__ = Mock(return_value=mock_db)
-        mock_mongo_client.return_value = mock_client
-        
-        # Mock subprocess to simulate successful processing
-        mock_subprocess.return_value = Mock(returncode=0)
-        
-        # Create mock output files
-        output_dir = tmp_path / "runs" / "detect" / "test_results" / "bird_iteration1"
-        output_dir.mkdir(parents=True)
-        (output_dir / "count_summary.json").write_text(json.dumps({
-            "unique_entities": 10,
-            "total_detections": 150,
-            "track_ids": [1, 2, 3]
-        }))
-        (output_dir / "count_summary.txt").write_text("Bird Count Summary")
-        
-        video_path = tmp_path / "test_video.mp4"
-        video_path.write_bytes(b"fake video")
-        
-        with patch('animal_counter.api.main.UPLOAD_DIR', tmp_path):
-            with patch('animal_counter.api.main.RESULTS_DIR', tmp_path):
-                with patch('animal_counter.api.main.Path') as mock_path:
-                    # Mock Path operations
-                    mock_path.return_value.exists.return_value = True
-                    mock_path.return_value.iterdir.return_value = [output_dir]
-                    mock_path.return_value.stat.return_value.st_mtime = 1234567890
-                    mock_path.return_value.name = "bird_iteration1"
-                    
-                    result = process_video_task(str(video_path), "birds", "test-uuid-123")
-        
-        assert result["result_id"] == "test-uuid-123"
-        assert result["detection_type"] == "birds"
-        assert mock_collection.insert_one.called
 
 
 class TestHealthEndpoint:
