@@ -36,16 +36,25 @@ def sample_video_file():
 def mock_api_client():
     """Mock the API service client"""
     with patch('animal_counter.upload_service.main.httpx.AsyncClient') as mock_client_class:
-        mock_client = AsyncMock()
-        mock_response = AsyncMock()
+        # Create mock response (httpx response.json() is synchronous)
+        mock_response = Mock()
         mock_response.status_code = 202
-        mock_response.json.return_value = {"result_id": "test-result-123", "status": "processing"}
+        mock_response.json = Mock(return_value={"result_id": "test-result-123", "status": "processing"})
         mock_response.raise_for_status = Mock()
+        
+        # Create mock client
+        mock_client = AsyncMock()
         mock_client.post = AsyncMock(return_value=mock_response)
         
         # Setup async context manager
-        mock_client_class.return_value.__aenter__ = AsyncMock(return_value=mock_client)
-        mock_client_class.return_value.__aexit__ = AsyncMock(return_value=None)
+        async def aenter():
+            return mock_client
+        
+        async def aexit(*args):
+            return None
+        
+        mock_client_class.return_value.__aenter__ = aenter
+        mock_client_class.return_value.__aexit__ = aexit
         
         yield mock_client
 
@@ -71,10 +80,10 @@ class TestUploadEndpoint:
     
     def test_upload_livestock_video(self, client, sample_video_file, mock_api_client, tmp_path):
         """Test uploading a livestock video"""
-        # Update mock response for this test
-        mock_response = AsyncMock()
+        # Update mock response for this test (httpx response.json() is synchronous)
+        mock_response = Mock()
         mock_response.status_code = 202
-        mock_response.json.return_value = {"result_id": "test-result-456", "status": "processing"}
+        mock_response.json = Mock(return_value={"result_id": "test-result-456", "status": "processing"})
         mock_response.raise_for_status = Mock()
         mock_api_client.post.return_value = mock_response
         

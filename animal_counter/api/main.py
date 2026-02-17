@@ -161,7 +161,7 @@ def process_video_task(video_path: str, detection_type: str, result_id: str):
             "unique_entities_by_primary_class": summary_data.get("unique_entities_by_primary_class", {}),
             "output_dir": str(output_dir),
             "summary_text": summary_text,
-            "created_at": datetime.utcnow().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "status": "completed"
         }
         
@@ -188,7 +188,7 @@ def process_video_task(video_path: str, detection_type: str, result_id: str):
             "video_source": str(video_path),
             "status": "failed",
             "error": str(e),
-            "created_at": datetime.utcnow().isoformat()
+            "created_at": datetime.now(timezone.utc).isoformat()
         }
         # Use sync pymongo for background tasks
         try:
@@ -208,11 +208,11 @@ async def health_check():
     return {"status": "healthy"}
 
 
-@app.post("/process", response_model=ProcessResponse)
+@app.post("/process", status_code=202)
 async def process_video(
     background_tasks: BackgroundTasks,
     video: UploadFile = File(...),
-    detection_type: str = Form(..., regex="^(birds|livestock)$")
+    detection_type: str = Form(..., pattern="^(birds|livestock)$")
 ):
     """
     Process a video for animal counting
@@ -252,7 +252,7 @@ async def process_video(
                 "detection_type": detection_type,
                 "video_source": video.filename,
                 "status": "processing",
-                "created_at": datetime.utcnow().isoformat()
+                "created_at": datetime.now(timezone.utc).isoformat()
             }
             await collection.insert_one(initial_record)
         

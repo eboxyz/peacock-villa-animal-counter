@@ -15,8 +15,8 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  test:
-    name: Build Backend Services
+  test-backend:
+    name: Test Backend
     runs-on: ubuntu-latest
     env:
       UPLOAD_DIR: ./test_uploads
@@ -32,6 +32,15 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+          cache: 'pip'
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Install Python dependencies
         run: |
@@ -47,10 +56,20 @@ jobs:
         run: |
           python -m pytest tests/ -v --tb=short
 
+  test-frontend:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install frontend dependencies
         working-directory: ./frontend
@@ -72,6 +91,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
         working-directory: ./frontend
@@ -90,7 +111,7 @@ jobs:
 
   build-and-push:
     name: Build and Push Docker Image
-    needs: [test, build-frontend]
+    needs: [test-backend, test-frontend, build-frontend]
     runs-on: ubuntu-latest
     permissions:
       contents: read

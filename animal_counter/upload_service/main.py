@@ -81,7 +81,7 @@ async def health_check():
 @app.post("/upload", response_model=UploadResponse)
 async def upload_video(
     video: UploadFile = File(...),
-    detection_type: str = Form(..., regex="^(birds|livestock)$")
+    detection_type: str = Form(..., pattern="^(birds|livestock)$")
 ):
     """
     Upload a video file for processing
