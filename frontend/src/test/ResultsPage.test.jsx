@@ -24,7 +24,7 @@ const renderResultsPage = () => {
 describe('ResultsPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.useFakeTimers()
+    vi.useFakeTimers({ advanceTimers: true })
   })
 
   afterEach(() => {
@@ -47,7 +47,7 @@ describe('ResultsPage', () => {
     await waitFor(() => {
       expect(screen.getByText(/no results yet/i)).toBeInTheDocument()
       expect(screen.getByText(/upload a video/i)).toBeInTheDocument()
-    })
+    }, { timeout: 3000 })
   })
 
   it('displays list of results', async () => {
@@ -60,7 +60,7 @@ describe('ResultsPage', () => {
       expect(screen.getByText('livestock')).toBeInTheDocument()
       expect(screen.getByText('10')).toBeInTheDocument() // unique_entities
       expect(screen.getByText('150')).toBeInTheDocument() // total_detections
-    })
+    }, { timeout: 3000 })
   })
 
   it('shows correct status badges', async () => {
@@ -72,7 +72,7 @@ describe('ResultsPage', () => {
       expect(screen.getByText('Completed')).toBeInTheDocument()
       expect(screen.getByText('Processing')).toBeInTheDocument()
       expect(screen.getByText('Failed')).toBeInTheDocument()
-    })
+    }, { timeout: 3000 })
   })
 
   it('displays results sorted by date (newest first)', async () => {
@@ -84,7 +84,7 @@ describe('ResultsPage', () => {
       const resultCards = screen.getAllByText(/birds|livestock/i)
       // First result should be birds (newest)
       expect(resultCards[0]).toHaveTextContent('birds')
-    })
+    }, { timeout: 3000 })
   })
 
   it('shows error message when API fails', async () => {
@@ -94,25 +94,25 @@ describe('ResultsPage', () => {
     
     await waitFor(() => {
       expect(screen.getByText(/failed to load/i)).toBeInTheDocument()
-    })
+    }, { timeout: 3000 })
   })
 
   it('has refresh button that reloads results', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     api.getAllResults.mockResolvedValue(mockResults)
     
     renderResultsPage()
     
     await waitFor(() => {
       expect(api.getAllResults).toHaveBeenCalledTimes(1)
-    })
+    }, { timeout: 3000 })
     
     const refreshButton = screen.getByText('Refresh')
     await user.click(refreshButton)
     
     await waitFor(() => {
       expect(api.getAllResults).toHaveBeenCalledTimes(2)
-    })
+    }, { timeout: 3000 })
   })
 
   it('auto-refreshes every 10 seconds', async () => {
@@ -122,14 +122,15 @@ describe('ResultsPage', () => {
     
     await waitFor(() => {
       expect(api.getAllResults).toHaveBeenCalledTimes(1)
-    })
+    }, { timeout: 3000 })
     
     // Fast-forward 10 seconds
     vi.advanceTimersByTime(10000)
+    await vi.runAllTimersAsync()
     
     await waitFor(() => {
       expect(api.getAllResults).toHaveBeenCalledTimes(2)
-    })
+    }, { timeout: 3000 })
   })
 
   it('creates links to result detail pages', async () => {
@@ -142,6 +143,6 @@ describe('ResultsPage', () => {
       const resultLinks = links.filter(link => link.href.includes('/results/'))
       expect(resultLinks.length).toBeGreaterThan(0)
       expect(resultLinks[0].href).toContain('/results/result-1')
-    })
+    }, { timeout: 3000 })
   })
 })

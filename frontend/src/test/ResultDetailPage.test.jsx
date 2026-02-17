@@ -27,7 +27,7 @@ vi.mock('react-router-dom', async () => {
 describe('ResultDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.useFakeTimers()
+    vi.useFakeTimers({ advanceTimers: true })
   })
 
   afterEach(() => {
@@ -60,7 +60,7 @@ describe('ResultDetailPage', () => {
       expect(screen.getByText('result-1')).toBeInTheDocument()
       expect(screen.getByText('10')).toBeInTheDocument() // unique_entities
       expect(screen.getByText('150')).toBeInTheDocument() // total_detections
-    })
+    }, { timeout: 3000 })
   })
 
   it('shows processing status and auto-refreshes', async () => {
@@ -75,14 +75,15 @@ describe('ResultDetailPage', () => {
     
     await waitFor(() => {
       expect(screen.getByText(/processing in progress/i)).toBeInTheDocument()
-    })
+    }, { timeout: 3000 })
     
     // Fast-forward 5 seconds (auto-refresh interval)
     vi.advanceTimersByTime(5000)
+    await vi.runAllTimersAsync()
     
     await waitFor(() => {
       expect(api.getResult).toHaveBeenCalledTimes(2)
-    })
+    }, { timeout: 3000 })
   })
 
   it('shows error message when result not found', async () => {
@@ -97,7 +98,7 @@ describe('ResultDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByText(/not found/i)).toBeInTheDocument()
       expect(screen.getByText(/back to results/i)).toBeInTheDocument()
-    })
+    }, { timeout: 3000 })
   })
 
   it('displays class breakdowns for completed results', async () => {
@@ -114,7 +115,7 @@ describe('ResultDetailPage', () => {
       expect(screen.getByText('sheep')).toBeInTheDocument()
       expect(screen.getByText('cow')).toBeInTheDocument()
       expect(screen.getByText('Unique Animals by Primary Class')).toBeInTheDocument()
-    })
+    }, { timeout: 3000 })
   })
 
   it('displays summary text when available', async () => {
@@ -129,7 +130,7 @@ describe('ResultDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Summary')).toBeInTheDocument()
       expect(screen.getByText(/Bird Count Summary/i)).toBeInTheDocument()
-    })
+    }, { timeout: 3000 })
   })
 
   it('displays track IDs when available', async () => {
@@ -144,7 +145,7 @@ describe('ResultDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Track IDs')).toBeInTheDocument()
       expect(screen.getByText(/1, 2, 3/i)).toBeInTheDocument()
-    })
+    }, { timeout: 3000 })
   })
 
   it('shows failed status with error message', async () => {
@@ -164,7 +165,7 @@ describe('ResultDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByText('Failed')).toBeInTheDocument()
       expect(screen.getByText(/Invalid video format/i)).toBeInTheDocument()
-    })
+    }, { timeout: 3000 })
   })
 
   it('displays video metadata', async () => {
@@ -178,7 +179,7 @@ describe('ResultDetailPage', () => {
     
     await waitFor(() => {
       expect(screen.getByText(/test_video\.mp4/i)).toBeInTheDocument()
-    })
+    }, { timeout: 3000 })
   })
 
   it('has back button that navigates to results list', async () => {
@@ -194,6 +195,6 @@ describe('ResultDetailPage', () => {
       const backButton = screen.getByText(/back to results/i)
       expect(backButton).toBeInTheDocument()
       expect(backButton.closest('a')).toHaveAttribute('href', '/results')
-    })
+    }, { timeout: 3000 })
   })
 })

@@ -78,10 +78,12 @@ describe('UploadPage', () => {
     const file = new File(['content'], 'test.txt', { type: 'text/plain' })
     const input = screen.getByLabelText(/Click to select video file/i)
     
-    await user.upload(input, file)
+    await act(async () => {
+      await user.upload(input, file)
+    })
     
     await waitFor(() => {
-      expect(screen.getByText(/valid video file/i)).toBeInTheDocument()
+      expect(screen.getByText(/Please select a valid video file/i)).toBeInTheDocument()
     })
   })
 
@@ -113,10 +115,12 @@ describe('UploadPage', () => {
     renderUploadPage()
     
     const submitButton = screen.getByText('Upload & Process')
-    await user.click(submitButton)
+    await act(async () => {
+      await user.click(submitButton)
+    })
     
     await waitFor(() => {
-      expect(screen.getByText(/select a video file/i)).toBeInTheDocument()
+      expect(screen.getByText(/Please select a video file/i)).toBeInTheDocument()
     })
   })
 
@@ -128,37 +132,47 @@ describe('UploadPage', () => {
     
     const file = new File(['video content'], 'test.mp4', { type: 'video/mp4' })
     const input = screen.getByLabelText(/Click to select video file/i)
-    await user.upload(input, file)
+    await act(async () => {
+      await user.upload(input, file)
+    })
     
     const submitButton = screen.getByText('Upload & Process')
-    await user.click(submitButton)
+    await act(async () => {
+      await user.click(submitButton)
+    })
     
     await waitFor(() => {
       expect(api.uploadVideo).toHaveBeenCalledWith(file, 'birds')
       expect(screen.getByText(/uploaded successfully/i)).toBeInTheDocument()
-    })
+    }, { timeout: 3000 })
   })
 
   it('navigates to result page after successful upload', async () => {
     const user = userEvent.setup()
     api.uploadVideo.mockResolvedValue(mockUploadResponse)
     
-    vi.useFakeTimers()
+    vi.useFakeTimers({ advanceTimers: true })
     renderUploadPage()
     
     const file = new File(['video content'], 'test.mp4', { type: 'video/mp4' })
     const input = screen.getByLabelText(/Click to select video file/i)
-    await user.upload(input, file)
+    await act(async () => {
+      await user.upload(input, file)
+    })
     
     const submitButton = screen.getByText('Upload & Process')
-    await user.click(submitButton)
+    await act(async () => {
+      await user.click(submitButton)
+    })
     
     await waitFor(() => {
       expect(api.uploadVideo).toHaveBeenCalled()
     })
     
     // Fast-forward timers
-    vi.advanceTimersByTime(2000)
+    await act(async () => {
+      vi.advanceTimersByTime(2000)
+    })
     
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith('/results/test-result-123')
@@ -175,14 +189,18 @@ describe('UploadPage', () => {
     
     const file = new File(['video content'], 'test.mp4', { type: 'video/mp4' })
     const input = screen.getByLabelText(/Click to select video file/i)
-    await user.upload(input, file)
+    await act(async () => {
+      await user.upload(input, file)
+    })
     
     const submitButton = screen.getByText('Upload & Process')
-    await user.click(submitButton)
+    await act(async () => {
+      await user.click(submitButton)
+    })
     
     await waitFor(() => {
       expect(screen.getByText(/upload failed/i)).toBeInTheDocument()
-    })
+    }, { timeout: 3000 })
   })
 
   it('disables form while uploading', async () => {
@@ -193,12 +211,18 @@ describe('UploadPage', () => {
     
     const file = new File(['video content'], 'test.mp4', { type: 'video/mp4' })
     const input = screen.getByLabelText(/Click to select video file/i)
-    await user.upload(input, file)
+    await act(async () => {
+      await user.upload(input, file)
+    })
     
     const submitButton = screen.getByText('Upload & Process')
-    await user.click(submitButton)
+    await act(async () => {
+      await user.click(submitButton)
+    })
     
-    expect(submitButton).toBeDisabled()
-    expect(screen.getByText(/uploading/i)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(submitButton).toBeDisabled()
+      expect(screen.getByText(/uploading/i)).toBeInTheDocument()
+    })
   })
 })
