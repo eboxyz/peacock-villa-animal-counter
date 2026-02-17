@@ -18,6 +18,11 @@ jobs:
   test:
     name: Build Backend Services
     runs-on: ubuntu-latest
+    env:
+      UPLOAD_DIR: ./test_uploads
+      RESULTS_DIR: ./test_results
+      MONGODB_URL: mongodb://localhost:27017
+      MONGODB_DB: animal_counter_test
     
     steps:
       - name: Checkout code
