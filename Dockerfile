@@ -27,8 +27,7 @@ RUN pip install --no-cache-dir -r requirements.txt && \
     python-multipart==0.0.6
 
 # Copy application code
-COPY sheep_counter.py .
-COPY bird_counter.py .
+COPY animal_counter/ ./animal_counter/
 COPY yolov8m.pt .
 COPY yolov8l.pt .
 

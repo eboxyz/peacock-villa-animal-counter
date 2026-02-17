@@ -46,7 +46,7 @@ services:
         condition: service_healthy
     networks:
       - animal_counter_network
-    # Command will be set when we create the API server
+    command: python3 -m uvicorn animal_counter.api.main:app --host 0.0.0.0 --port 8000
 
   # Upload Service (handles file uploads)
   upload:
