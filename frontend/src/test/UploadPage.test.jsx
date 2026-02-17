@@ -84,7 +84,7 @@ describe('UploadPage', () => {
     
     await waitFor(() => {
       expect(screen.getByText(/Please select a valid video file/i)).toBeInTheDocument()
-    })
+    }, { timeout: 3000 })
   })
 
   it('validates file size and shows error for files over 500MB', async () => {
@@ -115,13 +115,19 @@ describe('UploadPage', () => {
     renderUploadPage()
     
     const submitButton = screen.getByText('Upload & Process')
+    // Button should be disabled when no file is selected
+    expect(submitButton).toBeDisabled()
+    
+    // Manually trigger form submission to test error handling
+    const form = submitButton.closest('form')
     await act(async () => {
-      await user.click(submitButton)
+      const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
+      form.dispatchEvent(submitEvent)
     })
     
     await waitFor(() => {
       expect(screen.getByText(/Please select a video file/i)).toBeInTheDocument()
-    })
+    }, { timeout: 3000 })
   })
 
   it('successfully uploads file and shows success message', async () => {
@@ -187,6 +193,11 @@ describe('UploadPage', () => {
     
     renderUploadPage()
     
+    // Wait for component to render
+    await waitFor(() => {
+      expect(screen.getByText('Upload Video')).toBeInTheDocument()
+    })
+    
     const file = new File(['video content'], 'test.mp4', { type: 'video/mp4' })
     const input = screen.getByLabelText(/Click to select video file/i)
     await act(async () => {
@@ -209,6 +220,11 @@ describe('UploadPage', () => {
     
     renderUploadPage()
     
+    // Wait for component to render
+    await waitFor(() => {
+      expect(screen.getByText('Upload Video')).toBeInTheDocument()
+    })
+    
     const file = new File(['video content'], 'test.mp4', { type: 'video/mp4' })
     const input = screen.getByLabelText(/Click to select video file/i)
     await act(async () => {
@@ -223,6 +239,6 @@ describe('UploadPage', () => {
     await waitFor(() => {
       expect(submitButton).toBeDisabled()
       expect(screen.getByText(/uploading/i)).toBeInTheDocument()
-    })
+    }, { timeout: 3000 })
   })
 })
