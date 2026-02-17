@@ -46,15 +46,11 @@ def mock_api_client():
         mock_client = AsyncMock()
         mock_client.post = AsyncMock(return_value=mock_response)
         
-        # Setup async context manager
-        async def aenter():
-            return mock_client
-        
-        async def aexit(*args):
-            return None
-        
-        mock_client_class.return_value.__aenter__ = aenter
-        mock_client_class.return_value.__aexit__ = aexit
+        # Setup async context manager - use AsyncMock for the context manager itself
+        mock_context_manager = AsyncMock()
+        mock_context_manager.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_context_manager.__aexit__ = AsyncMock(return_value=None)
+        mock_client_class.return_value = mock_context_manager
         
         yield mock_client
 

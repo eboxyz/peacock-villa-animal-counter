@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { BrowserRouter } from 'react-router-dom'
 import UploadPage from '../pages/UploadPage'
@@ -50,7 +50,9 @@ describe('UploadPage', () => {
     renderUploadPage()
     
     const select = screen.getByLabelText('Detection Type')
-    await user.selectOptions(select, 'livestock')
+    await act(async () => {
+      await user.selectOptions(select, 'livestock')
+    })
     
     expect(select.value).toBe('livestock')
   })
@@ -62,7 +64,9 @@ describe('UploadPage', () => {
     const file = new File(['video content'], 'test.mp4', { type: 'video/mp4' })
     const input = screen.getByLabelText(/Click to select video file/i)
     
-    await user.upload(input, file)
+    await act(async () => {
+      await user.upload(input, file)
+    })
     
     expect(screen.getByText(/test\.mp4/i)).toBeInTheDocument()
   })
@@ -85,11 +89,19 @@ describe('UploadPage', () => {
     const user = userEvent.setup()
     renderUploadPage()
     
-    // Create a mock file that's too large
-    const largeFile = new File(['x'.repeat(501 * 1024 * 1024)], 'large.mp4', { type: 'video/mp4' })
+    // Create a mock file with large size property without allocating memory
+    const largeFile = new File(['small content'], 'large.mp4', { type: 'video/mp4' })
+    // Override the size property to simulate a large file
+    Object.defineProperty(largeFile, 'size', {
+      value: 501 * 1024 * 1024, // 501MB
+      writable: false
+    })
+    
     const input = screen.getByLabelText(/Click to select video file/i)
     
-    await user.upload(input, largeFile)
+    await act(async () => {
+      await user.upload(input, largeFile)
+    })
     
     await waitFor(() => {
       expect(screen.getByText(/less than 500MB/i)).toBeInTheDocument()
