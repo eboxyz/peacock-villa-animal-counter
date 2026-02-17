@@ -6,6 +6,7 @@ import os
 import uuid
 import subprocess
 import json
+import shutil
 from pathlib import Path
 from datetime import datetime, timezone
 import motor.motor_asyncio
@@ -63,11 +64,13 @@ class ProcessResponse(BaseModel):
 class ResultItem(BaseModel):
     result_id: str
     detection_type: str
-    unique_entities: int
-    total_detections: int
+    status: str
     video_source: str
     created_at: str
+    unique_entities: Optional[int] = None
+    total_detections: Optional[int] = None
     output_dir: Optional[str] = None
+    results_video_path: Optional[str] = None
 
 
 class ResultDetail(ResultItem):
@@ -107,16 +110,35 @@ def process_video_task(video_path: str, detection_type: str, result_id: str):
         ]
         
         logger.info(f"Running command: {' '.join(cmd)}")
-        result = subprocess.run(
+        logger.info(f"Starting processing for result_id: {result_id}")
+        
+        # Stream output in real-time
+        process = subprocess.Popen(
             cmd,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
             text=True,
+            bufsize=1,
+            universal_newlines=True,
             cwd="/app"
         )
         
-        if result.returncode != 0:
-            logger.error(f"Processing failed: {result.stderr}")
-            raise RuntimeError(f"Processing failed: {result.stderr}")
+        # Stream output line by line
+        output_lines = []
+        for line in process.stdout:
+            line = line.rstrip()
+            if line:
+                logger.info(f"[Processing {result_id}] {line}")
+                output_lines.append(line)
+        
+        process.wait()
+        
+        if process.returncode != 0:
+            error_output = '\n'.join(output_lines[-50:])  # Last 50 lines
+            logger.error(f"Processing failed (exit code {process.returncode}): {error_output}")
+            raise RuntimeError(f"Processing failed: {error_output}")
+        
+        logger.info(f"Processing completed successfully for result_id: {result_id}")
         
         # Find the output directory (YOLO creates incrementing folders)
         project_base = Path("/app") / "runs" / "detect" / project_name
@@ -149,7 +171,23 @@ def process_video_task(video_path: str, detection_type: str, result_id: str):
         if txt_file.exists():
             summary_text = txt_file.read_text()
         
+        # Copy processed video to results volume for Nginx to serve
+        # Find the video file in the output directory (YOLO saves it there)
+        video_files = list(output_dir.glob("*.mp4")) + list(output_dir.glob("*.MOV")) + list(output_dir.glob("*.mov"))
+        results_video_path = None
+        if video_files:
+            source_video = video_files[0]  # YOLO typically saves one video
+            # Copy to results volume: /app/results/test_results/iteration1/video.mp4
+            relative_path = output_dir.relative_to(Path("/app/runs/detect"))
+            results_dir = RESULTS_DIR / relative_path
+            results_dir.mkdir(parents=True, exist_ok=True)
+            results_video_path = results_dir / source_video.name
+            shutil.copy2(source_video, results_video_path)
+            logger.info(f"Copied processed video to: {results_video_path}")
+        
         # Prepare result data for MongoDB
+        # Store path relative to /results/ for frontend URL construction
+        results_relative_path = str(results_video_path.relative_to(RESULTS_DIR)) if results_video_path else None
         result_data = {
             "result_id": result_id,
             "detection_type": detection_type,
@@ -159,20 +197,26 @@ def process_video_task(video_path: str, detection_type: str, result_id: str):
             "track_ids": summary_data.get("track_ids", []),
             "detections_by_class": summary_data.get("detections_by_class", {}),
             "unique_entities_by_primary_class": summary_data.get("unique_entities_by_primary_class", {}),
-            "output_dir": str(output_dir),
+            "output_dir": str(output_dir),  # Keep original for reference
+            "results_video_path": results_relative_path,  # Path relative to /results/ for frontend
             "summary_text": summary_text,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "status": "completed"
         }
         
-        # Store in MongoDB (sync insert for background task)
+        # Update MongoDB record (replace the existing "processing" record)
         # Use sync pymongo for background tasks
         try:
             from pymongo import MongoClient
             sync_client = MongoClient(MONGODB_URL, serverSelectionTimeoutMS=5000)
             sync_db = sync_client[MONGODB_DB]
             sync_collection = sync_db["results"]
-            sync_collection.insert_one(result_data)
+            # Update existing record or insert if it doesn't exist
+            sync_collection.replace_one(
+                {"result_id": result_id},
+                result_data,
+                upsert=True
+            )
         except Exception as e:
             logger.error(f"Failed to store result in MongoDB: {e}")
         
@@ -190,13 +234,19 @@ def process_video_task(video_path: str, detection_type: str, result_id: str):
             "error": str(e),
             "created_at": datetime.now(timezone.utc).isoformat()
         }
+        # Update MongoDB record with error status
         # Use sync pymongo for background tasks
         try:
             from pymongo import MongoClient
             sync_client = MongoClient(MONGODB_URL, serverSelectionTimeoutMS=5000)
             sync_db = sync_client[MONGODB_DB]
             sync_collection = sync_db["results"]
-            sync_collection.insert_one(error_data)
+            # Update existing record or insert if it doesn't exist
+            sync_collection.replace_one(
+                {"result_id": result_id},
+                error_data,
+                upsert=True
+            )
         except Exception as e:
             logger.error(f"Failed to store error in MongoDB: {e}")
         raise
@@ -230,11 +280,16 @@ async def process_video(
     
     try:
         # Save file
-        with open(saved_path, "wb") as f:
+        try:
             content = await video.read()
-            f.write(content)
-        
-        logger.info(f"Saved uploaded file: {saved_path}")
+            if not content:
+                raise ValueError("Empty file content")
+            with open(saved_path, "wb") as f:
+                f.write(content)
+            logger.info(f"Saved uploaded file: {saved_path} (size: {len(content)} bytes)")
+        except Exception as file_error:
+            logger.error(f"Failed to save file: {file_error}")
+            raise HTTPException(status_code=500, detail=f"Failed to save file: {str(file_error)}")
         
         # Add background task for processing
         background_tasks.add_task(
@@ -246,15 +301,19 @@ async def process_video(
         
         # Store initial record
         collection = get_mongodb_collection()
-        if collection:
-            initial_record = {
-                "result_id": result_id,
-                "detection_type": detection_type,
-                "video_source": video.filename,
-                "status": "processing",
-                "created_at": datetime.now(timezone.utc).isoformat()
-            }
-            await collection.insert_one(initial_record)
+        if collection is not None:
+            try:
+                initial_record = {
+                    "result_id": result_id,
+                    "detection_type": detection_type,
+                    "video_source": video.filename,
+                    "status": "processing",
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                await collection.insert_one(initial_record)
+            except Exception as e:
+                logger.warning(f"Failed to store initial record in MongoDB: {e}")
+                # Continue processing even if MongoDB insert fails
         
         return ProcessResponse(
             result_id=result_id,
@@ -296,10 +355,15 @@ async def get_result(result_id: str):
     if collection is None:
         raise HTTPException(status_code=503, detail="Database not available")
     
-    doc = await collection.find_one({"result_id": result_id})
+    # Find the most recent document for this result_id (in case of duplicates)
+    # Sort by created_at descending to get the latest status
+    cursor = collection.find({"result_id": result_id}).sort("created_at", -1).limit(1)
+    docs = await cursor.to_list(length=1)
     
-    if not doc:
+    if not docs:
         raise HTTPException(status_code=404, detail="Result not found")
+    
+    doc = docs[0]
     
     # Convert ObjectId to string if needed
     if "_id" in doc:

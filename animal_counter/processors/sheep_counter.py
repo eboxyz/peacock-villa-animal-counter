@@ -7,11 +7,19 @@ from pathlib import Path
 
 # Parse command-line arguments
 parser = argparse.ArgumentParser(description='Count animals in a video using YOLO')
-parser.add_argument('video', nargs='?', help='Video path (full path or filename relative to /Users/eyu/Videos)')
+parser.add_argument('video', nargs='?', help='Video path (full path or filename relative to default directory)')
+parser.add_argument('--video-dir', default=None, help='Default video directory (default: /Users/eyu/Videos or $VIDEO_DIR env var)')
+parser.add_argument('--device', default=None, choices=['auto', 'cpu', 'cuda', 'mps'], help='Device to use (default: auto-detect)')
+parser.add_argument('--conf', type=float, default=0.3, help='Confidence threshold (default: 0.3)')
+parser.add_argument('--iou', type=float, default=0.45, help='IOU threshold for NMS (default: 0.45)')
+parser.add_argument('--imgsz', type=int, default=640, help='Input image size (default: 640)')
+parser.add_argument('--model', default='yolov8m.pt', help='Model to use (yolov8n/s/m/l/x, default: yolov8m.pt)')
+parser.add_argument('--show-conf', action='store_true', help='Show confidence scores on boxes')
+parser.add_argument('--line-width', type=int, default=2, help='Bounding box line width')
 args = parser.parse_args()
 
-# Default video directory (Photos app export location)
-DEFAULT_VIDEO_DIR = '/Users/eyu/Videos'
+# Default video directory (can be overridden by env var or argument)
+DEFAULT_VIDEO_DIR = args.video_dir or os.getenv('VIDEO_DIR', '/Users/eyu/Videos')
 
 # Determine video source path
 if args.video:
@@ -50,12 +58,33 @@ if not os.path.exists(video_path):
     print(f"❌ Error: Video file does not exist: {video_path}")
     exit(1)
 
-# M4 MacBook uses MPS (Metal Performance Shaders)
-device = 'mps' if torch.backends.mps.is_available() else 'cpu'
-print(f"Using: {device}")
+# Device selection (auto-detect if not specified)
+if args.device:
+    if args.device == 'auto':
+        # Auto-detect best available device
+        if torch.cuda.is_available():
+            device = 'cuda'
+        elif torch.backends.mps.is_available():
+            device = 'mps'
+        else:
+            device = 'cpu'
+    else:
+        device = args.device
+else:
+    # Default: auto-detect
+    if torch.cuda.is_available():
+        device = 'cuda'
+    elif torch.backends.mps.is_available():
+        device = 'mps'
+    else:
+        device = 'cpu'
+
+print(f"Using device: {device}")
+if device == 'cuda':
+    print(f"  CUDA device: {torch.cuda.get_device_name(0)}")
 
 # Load pretrained model
-model = YOLO('yolov8m.pt')
+model = YOLO(args.model)
 
 # COCO dataset class IDs for livestock-like animals
 # Goat is NOT in COCO, but goats may be detected as these similar animals:
@@ -83,10 +112,14 @@ results = model.track(
     source=video_path,
     device=device,
     save=True,
-    conf=0.3,
+    conf=args.conf,
+    iou=args.iou,
+    imgsz=args.imgsz,
     classes=LIVESTOCK_CLASS_IDS,  # Detect livestock-like animals (goats may appear as any)
     project='test_results',
-    name='iteration'
+    name='iteration',
+    show_conf=args.show_conf,
+    line_width=args.line_width
 )
 
 # Get the actual save directory from results (where the MP4 was saved)

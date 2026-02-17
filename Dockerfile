@@ -24,7 +24,8 @@ RUN pip install --no-cache-dir -r requirements.txt && \
     uvicorn[standard]==0.24.0 \
     motor==3.3.2 \
     pymongo==4.6.0 \
-    python-multipart==0.0.6
+    python-multipart==0.0.6 \
+    httpx>=0.25.0
 
 # Copy application code
 COPY animal_counter/ ./animal_counter/

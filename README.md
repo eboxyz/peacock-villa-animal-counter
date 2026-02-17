@@ -76,7 +76,12 @@ cd ..
 docker-compose up
 ```
 
-Access the application at `http://localhost`
+**Access Points:**
+- **Frontend (Web UI)**: `http://localhost` (port 80) - Main entry point via Nginx
+- **API Direct**: `http://localhost:8000` - Direct API access (bypasses Nginx)
+- **Upload Service Direct**: `http://localhost:8001` - Direct upload service access
+
+**Note**: The frontend is served on port 80 through Nginx, which also proxies API requests. Port 8000 is the API service directly (useful for API docs at `/docs`).
 
 ## Testing
 
@@ -92,17 +97,30 @@ python3 -m pytest tests/ -v
 
 ## Services
 
+### Nginx (Port 80) - Main Entry Point
+- **Frontend**: Serves React web application at `/`
+- **API Proxy**: Routes `/api/*` requests to API service
+- **Upload Proxy**: Routes `/upload` requests to Upload service
+- **Results**: Serves static result files at `/results/*`
+
+**Access**: `http://localhost` (port 80) - This is where you access the web UI
+
 ### API Service (Port 8000)
 - `POST /process` - Process a video (internal)
 - `GET /all` - Get all processing results
 - `GET /results/{result_id}` - Get specific result
 - `GET /health` - Health check
+- `GET /docs` - API documentation (Swagger UI)
+
+**Access**: `http://localhost:8000` - Direct API access (bypasses Nginx)
 
 ### Upload Service (Port 8001)
 - `POST /upload` - Upload a video file (public-facing)
 - `GET /health` - Health check
 
-The upload service handles file uploads and forwards processing requests to the API service.
+**Access**: `http://localhost:8001` - Direct upload service access (bypasses Nginx)
+
+**Note**: In production, access everything through port 80 (Nginx). Ports 8000 and 8001 are exposed for direct API access during development/testing.
 
 ## Manual Testing Guide
 

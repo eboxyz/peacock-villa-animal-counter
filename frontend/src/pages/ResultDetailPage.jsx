@@ -10,25 +10,47 @@ function ResultDetailPage() {
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    loadResult()
-    // Refresh every 5 seconds if still processing
-    const interval = setInterval(() => {
-      if (result?.status === 'processing') {
-        loadResult()
+    let intervalId = null
+    
+    const checkStatus = async () => {
+      try {
+        const data = await api.getResult(resultId)
+        setResult(data)
+        setError(null)
+        setLoading(false)
+        
+        // Continue polling if still processing
+        if (data?.status === 'processing') {
+          intervalId = setTimeout(checkStatus, 5000)
+        }
+      } catch (err) {
+        setError(err.message || 'Failed to load result')
+        setLoading(false)
+        // Stop polling on error
       }
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [resultId, result?.status])
+    }
+    
+    // Initial load
+    checkStatus()
+    
+    return () => {
+      if (intervalId) {
+        clearTimeout(intervalId)
+      }
+    }
+  }, [resultId])
 
   const loadResult = async () => {
     try {
       const data = await api.getResult(resultId)
       setResult(data)
       setError(null)
+      setLoading(false)
+      return data
     } catch (err) {
       setError(err.message || 'Failed to load result')
-    } finally {
       setLoading(false)
+      throw err
     }
   }
 
@@ -38,13 +60,13 @@ function ResultDetailPage() {
   }
 
   const getVideoUrl = () => {
+    // Use results_video_path if available (relative to /results/)
+    if (result?.results_video_path) {
+      return `/results/${result.results_video_path}`
+    }
+    // Fallback to old method for backwards compatibility
     if (!result?.output_dir) return null
-    // The output_dir contains the full path, we need to find the video file
-    // Format: runs/detect/test_results/iteration1/ or runs/detect/test_results/bird_iteration1/
-    // Video files are in that directory with .mp4 extension
-    // We'll construct the path relative to /results/ which Nginx serves
     const outputPath = result.output_dir.replace(/^.*runs\/detect\//, '')
-    // Try common video filenames - the video source name should be in the output_dir
     const videoSource = result.video_source?.split('/').pop()?.replace(/\.[^/.]+$/, '') || 'video'
     return `/results/${outputPath}/${videoSource}.mp4`
   }
@@ -104,7 +126,7 @@ function ResultDetailPage() {
           {result.status === 'processing' && (
             <div className="alert alert-info">
               <div className="loading" style={{ display: 'inline-block', marginRight: '0.5rem' }}></div>
-              Processing in progress. This page will update automatically.
+              Processing in progress...
             </div>
           )}
 

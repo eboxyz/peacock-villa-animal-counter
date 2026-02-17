@@ -35,8 +35,8 @@ git push origin latest
 ```
 
 The image will be available at:
-- `ghcr.io/yourusername/peacock-villa-animal-counter:latest`
-- `ghcr.io/yourusername/peacock-villa-animal-counter:1.0.0`
+- `ghcr.io/eboxyz/peacock-villa-animal-counter:latest`
+- `ghcr.io/eboxyz/peacock-villa-animal-counter:1.0.0`
 
 ### Permissions
 

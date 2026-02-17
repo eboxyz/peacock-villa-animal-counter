@@ -25,7 +25,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: ghcr.io/yourusername/peacock-villa-animal-counter:latest
+    image: ghcr.io/eboxyz/peacock-villa-animal-counter:latest
     container_name: animal_counter_api
     restart: unless-stopped
     environment:
@@ -53,7 +53,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: ghcr.io/yourusername/peacock-villa-animal-counter:latest
+    image: ghcr.io/eboxyz/peacock-villa-animal-counter:latest
     container_name: animal_counter_upload
     restart: unless-stopped
     environment:

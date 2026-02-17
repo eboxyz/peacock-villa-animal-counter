@@ -8,7 +8,7 @@ export const api = {
     formData.append('video', file)
     formData.append('detection_type', detectionType)
 
-    const response = await fetch(`${UPLOAD_BASE}/upload`, {
+    const response = await fetch(`${UPLOAD_BASE}`, {
       method: 'POST',
       body: formData,
     })
