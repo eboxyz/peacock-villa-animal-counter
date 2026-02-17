@@ -28,8 +28,15 @@ RUN pip install --no-cache-dir -r requirements.txt && \
 
 # Copy application code
 COPY animal_counter/ ./animal_counter/
-COPY yolov8m.pt .
-COPY yolov8l.pt .
+
+# Download YOLO models (YOLO will download automatically if not present)
+# We download them here to ensure they're available in the image
+RUN python3 -c "from ultralytics import YOLO; YOLO('yolov8m.pt'); YOLO('yolov8l.pt')"
+
+# Copy frontend build (if available from CI/CD)
+# Note: This will fail if frontend/build doesn't exist, which is expected
+# In CI/CD, the frontend is built first and copied here
+COPY frontend/build ./frontend/build
 
 # Create directories for uploads and results
 RUN mkdir -p /app/uploads /app/results /app/logs

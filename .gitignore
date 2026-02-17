@@ -1,6 +1,9 @@
 runs/
 .DS_STORE
 
+# YOLO model files (large binaries, downloaded automatically)
+yolov8*.pt
+
 # Frontend
 frontend/node_modules/
 frontend/build/
