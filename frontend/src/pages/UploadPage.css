@@ -1,0 +1,38 @@
+.upload-page {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.page-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.page-subtitle {
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 640px) {
+  .page-title {
+    font-size: 1.5rem;
+  }
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.info-list {
+  padding-left: 1.5rem;
+  color: var(--text-secondary);
+}
+
+.info-list li {
+  margin-bottom: 0.5rem;
+}

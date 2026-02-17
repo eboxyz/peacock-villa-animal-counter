@@ -14,11 +14,16 @@ animal_counter/
 │   └── processors/         # Video processing scripts
 │       ├── bird_counter.py
 │       └── sheep_counter.py
+├── frontend/                # React frontend
+│   ├── src/                # Source code
+│   ├── package.json        # Node.js dependencies
+│   └── vite.config.js     # Vite configuration
 ├── tests/                   # Test suite
 │   ├── test_api.py
 │   └── test_upload_service.py
 ├── Dockerfile               # Docker image definition
 ├── docker-compose.yml       # Multi-service orchestration
+├── nginx.conf              # Nginx configuration
 ├── requirements.txt         # Python dependencies
 └── setup.py                 # Package setup
 ```
@@ -27,7 +32,9 @@ animal_counter/
 
 ### Local Development
 
-1. Install dependencies:
+#### Backend (API)
+
+1. Install Python dependencies:
 ```bash
 pip3 install -r requirements.txt
 ```
@@ -41,11 +48,35 @@ python3 -m uvicorn animal_counter.api.main:app --host 0.0.0.0 --port 8000 --relo
 - Swagger UI: http://localhost:8000/docs
 - ReDoc: http://localhost:8000/redoc
 
-### Docker
+#### Frontend
+
+1. Install Node.js dependencies:
+```bash
+cd frontend
+npm install
+```
+
+2. Start development server:
+```bash
+npm run dev
+```
+
+The frontend will be available at `http://localhost:3000`
+
+### Docker (Full Stack)
 
 ```bash
+# Build frontend first
+cd frontend
+npm install
+npm run build
+cd ..
+
+# Start all services
 docker-compose up
 ```
+
+Access the application at `http://localhost`
 
 ## Testing
 

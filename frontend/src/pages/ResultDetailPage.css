@@ -1,0 +1,138 @@
+.result-detail-page {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.result-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.result-id {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-family: monospace;
+  margin-top: 0.25rem;
+}
+
+.result-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  text-align: center;
+  padding: 1.5rem;
+  background: var(--bg-color);
+  border-radius: 0.5rem;
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  margin-bottom: 0.5rem;
+}
+
+.stat-label {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.detail-section {
+  margin-bottom: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.class-breakdown {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.class-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--bg-color);
+  border-radius: 0.5rem;
+}
+
+.class-name {
+  text-transform: capitalize;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.class-count {
+  font-weight: 600;
+  color: var(--primary-color);
+  font-size: 1.125rem;
+}
+
+.summary-text {
+  background: var(--bg-color);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  font-family: monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.track-ids {
+  font-family: monospace;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  background: var(--bg-color);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  word-break: break-all;
+}
+
+.result-video {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow);
+}
+
+.result-meta {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.result-meta p {
+  margin-bottom: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .result-stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stat-value {
+    font-size: 2rem;
+  }
+}
